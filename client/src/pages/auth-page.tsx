@@ -68,7 +68,7 @@ export default function AuthPage() {
   const onRegisterSubmit = async (data: RegisterFormValues) => {
     try {
       setIsSubmitting(true);
-      await register(data);
+      await register(data.username, data.email, data.password, data.phone);
     } catch (err) {
       console.error("Registration error:", err);
     } finally {
