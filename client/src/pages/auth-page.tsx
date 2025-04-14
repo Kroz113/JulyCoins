@@ -17,13 +17,13 @@ import {
 import { WalletIcon } from "@/components/ui/wallet-icon";
 
 const loginSchema = z.object({
-  email: z.string().email("Correo electrónico inválido"),
+  email: z.string().min(1, "El correo electrónico es obligatorio"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
 });
 
 const registerSchema = z.object({
   username: z.string().min(3, "El nombre de usuario debe tener al menos 3 caracteres"),
-  email: z.string().email("Correo electrónico inválido"),
+  email: z.string().min(1, "El correo electrónico es obligatorio"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   phone: z.string().min(9, "El número de teléfono debe tener al menos 9 caracteres"),
 });
@@ -151,7 +151,6 @@ export default function AuthPage() {
                         <Input
                           placeholder="usuario123"
                           {...field}
-                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -168,7 +167,6 @@ export default function AuthPage() {
                         <Input
                           placeholder="correo@ejemplo.com"
                           {...field}
-                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -186,7 +184,6 @@ export default function AuthPage() {
                           type="password"
                           placeholder="••••••••"
                           {...field}
-                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -203,7 +200,6 @@ export default function AuthPage() {
                         <Input
                           placeholder="+56 9 1234 5678"
                           {...field}
-                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
