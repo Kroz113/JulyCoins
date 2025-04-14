@@ -4,6 +4,7 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import { MinimalAuthProvider } from "./hooks/use-minimal-auth";
+import AuthSimplePage from "./pages/auth-simple";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/dashboard";
@@ -22,7 +23,7 @@ function Router() {
   return (
     <Switch>
       {/* Public Routes */}
-      <Route path="/auth" component={AuthPage} />
+      <Route path="/auth" component={AuthSimplePage} />
       
       {/* Student Routes */}
       <ProtectedRoute path="/" component={StudentDashboard} />
