@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
+import { useMinimalAuth } from "@/hooks/use-minimal-auth";
 import { Redirect } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -32,8 +32,9 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
-  const { user, loginMutation, registerMutation } = useAuth();
+  const { user, login, register, isLoading, error } = useMinimalAuth();
   const [isLoginView, setIsLoginView] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -53,12 +54,26 @@ export default function AuthPage() {
     },
   });
 
-  const onLoginSubmit = (data: LoginFormValues) => {
-    loginMutation.mutate(data);
+  const onLoginSubmit = async (data: LoginFormValues) => {
+    try {
+      setIsSubmitting(true);
+      await login(data);
+    } catch (err) {
+      console.error("Login error:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const onRegisterSubmit = (data: RegisterFormValues) => {
-    registerMutation.mutate(data);
+  const onRegisterSubmit = async (data: RegisterFormValues) => {
+    try {
+      setIsSubmitting(true);
+      await register(data);
+    } catch (err) {
+      console.error("Registration error:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (user) {
@@ -89,7 +104,7 @@ export default function AuthPage() {
                         <Input
                           placeholder="correo@ejemplo.com"
                           {...field}
-                          disabled={loginMutation.isPending}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -107,7 +122,7 @@ export default function AuthPage() {
                           type="password"
                           placeholder="••••••••"
                           {...field}
-                          disabled={loginMutation.isPending}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -117,9 +132,9 @@ export default function AuthPage() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={loginMutation.isPending}
+                  disabled={isSubmitting}
                 >
-                  {loginMutation.isPending ? "Iniciando sesión..." : "Iniciar Sesión"}
+                  {isSubmitting ? "Iniciando sesión..." : "Iniciar Sesión"}
                 </Button>
               </form>
             </Form>
@@ -136,7 +151,7 @@ export default function AuthPage() {
                         <Input
                           placeholder="usuario123"
                           {...field}
-                          disabled={registerMutation.isPending}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -153,7 +168,7 @@ export default function AuthPage() {
                         <Input
                           placeholder="correo@ejemplo.com"
                           {...field}
-                          disabled={registerMutation.isPending}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -171,7 +186,7 @@ export default function AuthPage() {
                           type="password"
                           placeholder="••••••••"
                           {...field}
-                          disabled={registerMutation.isPending}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -188,7 +203,7 @@ export default function AuthPage() {
                         <Input
                           placeholder="+56 9 1234 5678"
                           {...field}
-                          disabled={registerMutation.isPending}
+                          disabled={isSubmitting}
                         />
                       </FormControl>
                       <FormMessage />
@@ -198,9 +213,9 @@ export default function AuthPage() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={registerMutation.isPending}
+                  disabled={isSubmitting}
                 >
-                  {registerMutation.isPending ? "Registrando..." : "Registrarse"}
+                  {isSubmitting ? "Registrando..." : "Registrarse"}
                 </Button>
               </form>
             </Form>

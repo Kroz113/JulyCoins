@@ -3,7 +3,6 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import { ProtectedRoute } from "./lib/protected-route";
-import { AuthProvider } from "./hooks/use-auth";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/dashboard";
@@ -45,10 +44,10 @@ function Router() {
 
 function App() {
   return (
-    <AuthProvider>
+    <>
       <Router />
       <Toaster />
-    </AuthProvider>
+    </>
   );
 }
 

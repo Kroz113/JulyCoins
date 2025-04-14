@@ -1,4 +1,4 @@
-import { useAuth } from "@/hooks/use-auth";
+import { useMinimalAuth } from "@/hooks/use-minimal-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
 
@@ -9,7 +9,7 @@ type ProtectedRouteProps = {
 }
 
 export function ProtectedRoute({ path, component: Component, adminOnly = false }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading } = useMinimalAuth();
 
   if (isLoading) {
     return (
