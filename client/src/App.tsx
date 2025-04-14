@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import { ProtectedRoute } from "./lib/protected-route";
+import { MinimalAuthProvider } from "./hooks/use-minimal-auth";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/dashboard";
@@ -44,10 +45,10 @@ function Router() {
 
 function App() {
   return (
-    <>
+    <MinimalAuthProvider>
       <Router />
       <Toaster />
-    </>
+    </MinimalAuthProvider>
   );
 }
 

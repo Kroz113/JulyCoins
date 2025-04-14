@@ -32,7 +32,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
-  const { user, login, register, isLoading, error } = useMinimalAuth();
+  const { user, login, register, isLoading } = useMinimalAuth();
   const [isLoginView, setIsLoginView] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -57,7 +57,7 @@ export default function AuthPage() {
   const onLoginSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
-      await login(data);
+      await login(data.email, data.password);
     } catch (err) {
       console.error("Login error:", err);
     } finally {

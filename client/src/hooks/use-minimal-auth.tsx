@@ -1,167 +1,115 @@
-import { createContext, ReactNode, useContext, useState, useEffect } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 type User = {
   id: number;
   username: string;
-  email: string;
   role: string;
 };
 
-type AuthContextType = {
+type MinimalAuthContextType = {
   user: User | null;
   isLoading: boolean;
-  error: Error | null;
-  login: (credentials: { email: string; password: string }) => Promise<void>;
-  register: (userData: { 
-    username: string; 
-    email: string; 
-    password: string; 
-    phone: string 
-  }) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  register: (username: string, email: string, password: string, phone: string) => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const MinimalAuthContext = createContext<MinimalAuthContextType | null>(null);
 
 export function MinimalAuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Check if user is logged in on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch('/api/user', {
-          credentials: 'include'
-        });
-        
-        if (res.ok) {
-          const userData = await res.json();
-          setUser(userData);
-        } else {
-          // Not authenticated is a normal state, not an error
-          setUser(null);
-        }
-      } catch (err) {
-        console.error('Error checking authentication:', err);
-        setError(err instanceof Error ? err : new Error('Unknown error'));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  const login = async (credentials: { email: string; password: string }) => {
-    setIsLoading(true);
-    setError(null);
-    
+  const login = async (email: string, password: string) => {
     try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
+      setIsLoading(true);
+      const response = await fetch("/api/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(credentials),
-        credentials: 'include'
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
       });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ message: res.statusText }));
-        throw new Error(errorData.message || 'Login failed');
+      
+      if (!response.ok) {
+        throw new Error("Login failed");
       }
-
-      const userData = await res.json();
+      
+      const userData = await response.json();
       setUser(userData);
-    } catch (err) {
-      console.error('Login error:', err);
-      setError(err instanceof Error ? err : new Error('Login failed'));
-      throw err;
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (userData: { 
-    username: string; 
-    email: string; 
-    password: string; 
-    phone: string 
-  }) => {
-    setIsLoading(true);
-    setError(null);
-    
+  const register = async (username: string, email: string, password: string, phone: string) => {
     try {
-      const res = await fetch('/api/register', {
-        method: 'POST',
+      setIsLoading(true);
+      const response = await fetch("/api/register", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(userData),
-        credentials: 'include'
+        body: JSON.stringify({ username, email, password, phone }),
+        credentials: "include",
       });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ message: res.statusText }));
-        throw new Error(errorData.message || 'Registration failed');
+      
+      if (!response.ok) {
+        throw new Error("Registration failed");
       }
-
-      const newUser = await res.json();
-      setUser(newUser);
-    } catch (err) {
-      console.error('Registration error:', err);
-      setError(err instanceof Error ? err : new Error('Registration failed'));
-      throw err;
+      
+      const userData = await response.json();
+      setUser(userData);
+    } catch (error) {
+      console.error("Registration error:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
   const logout = async () => {
-    setIsLoading(true);
-    setError(null);
-    
     try {
-      const res = await fetch('/api/logout', {
-        method: 'POST',
-        credentials: 'include'
+      setIsLoading(true);
+      const response = await fetch("/api/logout", {
+        method: "POST",
+        credentials: "include",
       });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ message: res.statusText }));
-        throw new Error(errorData.message || 'Logout failed');
+      
+      if (!response.ok) {
+        throw new Error("Logout failed");
       }
-
+      
       setUser(null);
-    } catch (err) {
-      console.error('Logout error:', err);
-      setError(err instanceof Error ? err : new Error('Logout failed'));
-      throw err;
+    } catch (error) {
+      console.error("Logout error:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const value = {
-    user,
-    isLoading,
-    error,
-    login,
-    register,
-    logout
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <MinimalAuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        login,
+        logout,
+        register,
+      }}
+    >
       {children}
-    </AuthContext.Provider>
+    </MinimalAuthContext.Provider>
   );
 }
 
 export function useMinimalAuth() {
-  const context = useContext(AuthContext);
+  const context = useContext(MinimalAuthContext);
   if (!context) {
     throw new Error("useMinimalAuth must be used within a MinimalAuthProvider");
   }
