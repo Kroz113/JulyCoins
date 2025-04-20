@@ -76,13 +76,31 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({ i
 
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type User = {
+  id: number;
+  username: string;
+  password: string;
+  email: string;
+  phone: string;
+  role: string; // Asegúrate de que no permita `undefined`
+  createdAt: Date;
+};
 
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Task = typeof tasks.$inferSelect;
 
 export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
-export type Submission = typeof submissions.$inferSelect;
+export type Submission = {
+  id: number;
+  taskId: number;
+  userId: number;
+  title: string;
+  comment: string | null; // Asegúrate de que sea `string | null`
+  fileUrl: string;
+  status: string;
+  coinsAwarded: number | null;
+  createdAt: Date;
+};
 
 export type InsertAuction = z.infer<typeof insertAuctionSchema>;
 export type Auction = typeof auctions.$inferSelect;
@@ -91,7 +109,15 @@ export type InsertBid = z.infer<typeof insertBidSchema>;
 export type Bid = typeof bids.$inferSelect;
 
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
-export type Transaction = typeof transactions.$inferSelect;
+export type Transaction = {
+  id: number;
+  createdAt: Date;
+  type: string;
+  description: string;
+  userId: number;
+  amount: number;
+  relatedId: number | null; // Asegúrate de que sea `number | null`
+};
 
 // Extended types for API responses
 export type TaskWithSubmission = Task & {

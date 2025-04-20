@@ -1,13 +1,19 @@
+/* Importa las capas base, componentes y utilidades de Tailwind CSS */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Define estilos globales personalizados */
 @layer base {
+  /* Aplica un color de borde global */
   * {
-    @apply border-border;
+    border-color: #d1d5db; /* Usa el valor hexadecimal equivalente a border-gray-300 */
   }
+}
 
+/* Aplica estilos globales al cuerpo del documento */
+@layer base {
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased bg-gray-50 text-gray-900; /* Usa clases predeterminadas */
   }
 }

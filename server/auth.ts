@@ -1,11 +1,12 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { comparePasswords } from "./auth";
 
 declare global {
   namespace Express {
@@ -21,11 +22,18 @@ async function hashPassword(password: string) {
   return `${buf.toString("hex")}.${salt}`;
 }
 
-async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+export async function comparePasswords(storedPassword: string, suppliedPassword: string): Promise<boolean> {
+  const [salt, hashedPassword] = storedPassword.split(":");
+  if (!salt || !hashedPassword) {
+    throw new Error("Invalid stored password format");
+  }
+
+  return new Promise((resolve, reject) => {
+    scrypt(suppliedPassword, salt, 64, (err, derivedKey) => {
+      if (err) reject(err);
+      resolve(derivedKey.toString("hex") === hashedPassword);
+    });
+  });
 }
 
 export function setupAuth(app: Express) {
@@ -45,21 +53,26 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy({
-      usernameField: 'email',
-      passwordField: 'password'
-    }, async (email, password, done) => {
-      try {
-        const user = await storage.getUserByEmail(email);
-        if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false, { message: "Invalid email or password" });
-        } else {
+    new LocalStrategy(
+      { usernameField: "email" },
+      async (email, password, done) => {
+        try {
+          const user = await storage.getUserByEmail(email);
+          if (!user) {
+            return done(null, false, { message: "Invalid email or password" });
+          }
+
+          const isMatch = await comparePasswords(user.password, password);
+          if (!isMatch) {
+            return done(null, false, { message: "Invalid email or password" });
+          }
+
           return done(null, user);
+        } catch (err) {
+          return done(err);
         }
-      } catch (err) {
-        return done(err);
       }
-    }),
+    )
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
@@ -120,24 +133,25 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
-      if (err) {
-        return next(err);
-      }
+  app.post("/api/login", async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+      const user = await storage.getUserByEmail(email);
       if (!user) {
-        return res.status(401).json({ message: info?.message || "Invalid credentials" });
+        return res.status(401).json({ message: "Invalid email or password" });
       }
-      req.login(user, (err) => {
-        if (err) {
-          return next(err);
-        }
-        
-        // Don't send the password back
-        const { password, ...userWithoutPassword } = user;
-        return res.status(200).json(userWithoutPassword);
-      });
-    })(req, res, next);
+
+      const isMatch = await comparePasswords(user.password, password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Autenticación exitosa
+      res.json({ message: "Login successful", user });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
   });
 
   app.post("/api/logout", (req, res, next) => {
@@ -181,7 +195,7 @@ export function setupAuth(app: Express) {
 }
 
 // Middleware to check if the user is authenticated
-export function isAuthenticated(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
+export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
   if (req.isAuthenticated()) {
     return next();
   }
@@ -189,8 +203,8 @@ export function isAuthenticated(req: Express.Request, res: Express.Response, nex
 }
 
 // Middleware to check if the user is an admin
-export function isAdmin(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
-  if (req.isAuthenticated() && req.user.role === "admin") {
+export function isAdmin(req: Request, res: Response, next: NextFunction) {
+  if (req.isAuthenticated() && req.user?.role === "admin") {
     return next();
   }
   res.status(403).json({ message: "Forbidden" });
